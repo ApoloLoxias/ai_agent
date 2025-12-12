@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
+from config import SYSTEM_PROMPT, MODEL
+
 
 def main():
     client = initialise_client()
@@ -31,8 +33,9 @@ def parse_arguments():
 
 def generate_response(client, messages):
     response = client.models.generate_content(
-        model='gemini-2.5-flash',
-        contents=messages,
+        model = MODEL,
+        contents = messages,
+        config = types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT)
         )
     if response is None or response.usage_metadata is None:
         raise RuntimeError("Invalid Gemini response")
