@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-from config import SYSTEM_PROMPT, MODEL
+from config import SYSTEM_PROMPT, MODEL, AVAILABLE_FUNCTIONS
+
 
 
 def main():
@@ -35,7 +36,7 @@ def generate_response(client, messages):
     response = client.models.generate_content(
         model = MODEL,
         contents = messages,
-        config = types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT)
+        config = types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT, tools = [AVAILABLE_FUNCTIONS])
         )
     if response is None or response.usage_metadata is None:
         raise RuntimeError("Invalid Gemini response")
@@ -47,6 +48,9 @@ def print_output(user_prompt, response, verbose):
         print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
         print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
         print("=======================")
+    if response.function_calls:
+        for function_call in response.function_calls:
+            print(f"Calling function: {function_call.name}({function_call.args})")
     print("Response:")
     print(response.text)
 
