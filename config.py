@@ -9,11 +9,12 @@ You are a helpful AI coding agent.
 When a user asks a question or makes a request, make a function call plan. You can perform the following operations:
 
 - List files and directories
+- Read file contents
 
 All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
 """
 
-MODEL: str = 'gemini-2.5-flash'
+MODEL: str = 'gemini-2.5-flash-lite'
 
 
 ########################################
@@ -34,6 +35,20 @@ schema_get_files_info = types.FunctionDeclaration(
     ),
 )
 
+schema_get_file_content = types.FunctionDeclaration(
+    name="get_file_content",
+    description="Reads the content of a given file, constrained to the working directory.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="The path to the file to be read, relative to the working directory.",
+            ),
+        },
+    ),
+)
+
 AVAILABLE_FUNCTIONS = types.Tool(
-    function_declarations=[schema_get_files_info],
+    function_declarations=[schema_get_files_info, schema_get_file_content],
 )
