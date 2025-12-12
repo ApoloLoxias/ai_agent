@@ -10,6 +10,7 @@ When a user asks a question or makes a request, make a function call plan. You c
 
 - List files and directories
 - Read file contents
+- Write or overwrite files
 
 All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
 """
@@ -49,6 +50,24 @@ schema_get_file_content = types.FunctionDeclaration(
     ),
 )
 
+schema_write_file = types.FunctionDeclaration(
+    name="write_file",
+    description="Overwrites an existing file with the given content or creates a new file (along with necessary parent directories) with said content, constrained to the working directory.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="The path to the file for the content to be written to, relative to the working directory.",
+            ),
+            "content": types.Schema(
+                type=types.Type.STRING,
+                description="The content to be written.",
+            ),
+        },
+    ),
+)
+
 AVAILABLE_FUNCTIONS = types.Tool(
-    function_declarations=[schema_get_files_info, schema_get_file_content],
+    function_declarations=[schema_get_files_info, schema_get_file_content, schema_write_file],
 )
