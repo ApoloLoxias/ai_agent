@@ -6,6 +6,7 @@ from google import genai
 from google.genai import types
 
 from config import SYSTEM_PROMPT, MODEL, AVAILABLE_FUNCTIONS
+from functions.call_function import call_function
 
 
 
@@ -14,7 +15,7 @@ def main():
     args = parse_arguments()
     messages = [types.Content(role="user",parts=[types.Part(text=args.user_prompt)])]
     response = generate_response(client, messages)
-    print_output(args.user_prompt, response, args.verbose)
+    process_response(args.user_prompt, response, args.verbose)
 
 
 def initialise_client():
@@ -42,15 +43,26 @@ def generate_response(client, messages):
         raise RuntimeError("Invalid Gemini response")
     return response
 
-def print_output(user_prompt, response, verbose):
+def process_response(user_prompt, response, verbose):
     if verbose:
         print(f"User prompt: {user_prompt}")
         print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
         print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
         print("=======================")
+
+    a_list = []
     if response.function_calls:
         for function_call in response.function_calls:
-            print(f"Calling function: {function_call.name}({function_call.args})")
+            function_call_result = call_function(function_call, verbose)
+            if not function_call_result.parts[0].function_response.response:
+                print(f"Fatal Exception: The output from {function_call} contains no .parts[0].function_response.response")
+                raise Exception("Output contains no .parts[0].function_response.response")
+            else:
+                a_list.append(function_call_result.parts[0])
+                if verbose:
+                    print(f"-> {function_call_result.parts[0].function_response.response}")
+
+
     print("Response:")
     print(response.text)
 

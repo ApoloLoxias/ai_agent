@@ -18,6 +18,7 @@ All paths you provide should be relative to the working directory. You do not ne
 
 MODEL: str = 'gemini-2.5-flash-lite'
 
+WORKING_DIRECTORY: str = 'calculator'
 
 ########################################
 #### FUNCTION CALLING CONFIGURATION ####
