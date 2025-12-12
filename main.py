@@ -54,11 +54,13 @@ def process_response(user_prompt, response, verbose):
     if response.function_calls:
         for function_call in response.function_calls:
             function_call_result = call_function(function_call, verbose)
-            if not function_call_result.parts[0].function_response.response:
+            if (
+                not function_call_result.parts
+                or not function_call_result.parts[0].function_response
+            ):
                 print(f"Fatal Exception: The output from {function_call} contains no .parts[0].function_response.response")
                 raise Exception("Output contains no .parts[0].function_response.response")
-            else:
-                a_list.append(function_call_result.parts[0])
+            a_list.append(function_call_result.parts[0])
                 if verbose:
                     print(f"-> {function_call_result.parts[0].function_response.response}")
 

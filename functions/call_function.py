@@ -14,26 +14,25 @@ def call_function(function_call_part, verbose=False):
     else:
         print(f" - Calling function: {function_call_part.name}")
 
-    function_result = ""
     if function_call_part.name == "get_file_content":
         function_result = get_file_content(WORKING_DIRECTORY, **function_call_part.args)
-    if function_call_part.name == "get_files_info":
+    elif function_call_part.name == "get_files_info":
         function_result = get_files_info(WORKING_DIRECTORY, **function_call_part.args)
-    if function_call_part.name == "run_python_file":
+    elif function_call_part.name == "run_python_file":
         function_result = run_python_file(WORKING_DIRECTORY, **function_call_part.args)
-    if function_call_part.name == "write_file":
+    elif function_call_part.name == "write_file":
         function_result = write_file(WORKING_DIRECTORY, **function_call_part.args)
-
-    if function_result == "":
+    else:
         return types.Content(
             role="tool",
             parts=[
                 types.Part.from_function_response(
-                    name=function_call_part.name,
-                    response={"result": function_result},
+                    name=function_name,
+                    response={"error": f"Unknown function: {function_name}"},
                 )
             ],
         )
+
     return types.Content(
         role="tool",
         parts=[
