@@ -1,0 +1,1 @@
+MAX_CHAR: int = 10_000
