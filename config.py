@@ -11,6 +11,7 @@ When a user asks a question or makes a request, make a function call plan. You c
 - List files and directories
 - Read file contents
 - Write or overwrite files
+- Execute Python files with optional arguments
 
 All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
 """
@@ -68,6 +69,28 @@ schema_write_file = types.FunctionDeclaration(
     ),
 )
 
+schema_run_python_file = types.FunctionDeclaration(
+    name="run_python_file",
+    description="Executes a python program, constrained to the working directory.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="The path to the .py file to be executed, relative to the working directory.",
+            ),
+            "args": types.Schema(
+                type=types.Type.ARRAY,
+                description="An array of optional arguments to be passed to the executed file.",
+                items=types.Schema(
+                    type=types.Type.STRING,
+                    description="Each individual argument",
+                ),
+            ),
+        },
+    ),
+)
+
 AVAILABLE_FUNCTIONS = types.Tool(
-    function_declarations=[schema_get_files_info, schema_get_file_content, schema_write_file],
+    function_declarations=[schema_get_files_info, schema_get_file_content, schema_write_file, schema_run_python_file],
 )
