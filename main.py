@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-from config import SYSTEM_PROMPT, MODEL, AVAILABLE_FUNCTIONS
+from config import SYSTEM_PROMPT, MODEL, AVAILABLE_FUNCTIONS, MAX_ITERATIONS
 from functions.call_function import call_function
 
 
@@ -14,8 +14,9 @@ def main():
     client = initialise_client()
     args = parse_arguments()
     messages = [types.Content(role="user",parts=[types.Part(text=args.user_prompt)])]
-    response = generate_response(client, messages)
-    process_response(args.user_prompt, response, args.verbose)
+    response = generate_response(client, messages, args.verbose)
+    print("Response:")
+    print(response)
 
 
 def initialise_client():
@@ -33,40 +34,42 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def generate_response(client, messages):
-    response = client.models.generate_content(
-        model = MODEL,
-        contents = messages,
-        config = types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT, tools = [AVAILABLE_FUNCTIONS])
-        )
-    if response is None or response.usage_metadata is None:
-        raise RuntimeError("Invalid Gemini response")
-    return response
+def generate_response(client, messages, verbose):
+    for i in range(0, MAX_ITERATIONS):
+        response = client.models.generate_content(
+            model = MODEL,
+            contents = messages,
+            config = types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT, tools = [AVAILABLE_FUNCTIONS])
+            )
+        if response is None or response.usage_metadata is None:
+            raise RuntimeError("Invalid Gemini response")
 
-def process_response(user_prompt, response, verbose):
-    if verbose:
-        print(f"User prompt: {user_prompt}")
-        print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-        print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
-        print("=======================")
+        if verbose:
+            print("=======================")
+            print(f"Current prompt: {messages}")
+            print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
+            print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+            print("=======================")
 
-    a_list = []
-    if response.function_calls:
-        for function_call in response.function_calls:
-            function_call_result = call_function(function_call, verbose)
-            if (
-                not function_call_result.parts
-                or not function_call_result.parts[0].function_response
-            ):
-                print(f"Fatal Exception: The output from {function_call} contains no .parts[0].function_response.response")
-                raise Exception("Output contains no .parts[0].function_response.response")
-            a_list.append(function_call_result.parts[0])
+        if response.candidates:
+            for candidate in response.candidates:
+                messages.append(candidate.content)
+
+        if response.function_calls:
+            for function_call in response.function_calls:
+                function_call_result = call_function(function_call, verbose)
+                if (
+                    not function_call_result.parts
+                    or not function_call_result.parts[0].function_response
+                ):
+                    print(f"Fatal Exception: The output from {function_call} contains no .parts[0].function_response.response")
+                    raise Exception("Output contains no .parts[0].function_response.response")
                 if verbose:
                     print(f"-> {function_call_result.parts[0].function_response.response}")
+                messages.append(function_call_result)
 
-
-    print("Response:")
-    print(response.text)
+        else:
+            return response.text
 
 if __name__ == "__main__":
     main()
